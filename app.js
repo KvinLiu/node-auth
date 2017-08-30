@@ -1,9 +1,19 @@
-var express = require('express');
-var path = require('path');
-var favicon = require('serve-favicon');
-var logger = require('morgan');
-var cookieParser = require('cookie-parser');
-var bodyParser = require('body-parser');
+const express = require('express');
+const path = require('path');
+const favicon = require('serve-favicon');
+const logger = require('morgan');
+const cookieParser = require('cookie-parser');
+const bodyParser = require('body-parser');
+const session = require('express-session');
+const expressValidator = require('express-validator');
+const passport = require('passport');
+const LocalStrategy = require('passport-local').Strategy;
+const multer = require('multer');
+const upload = multer({dest: './uploads'});
+const flash = require('connect-flash');
+const mongodb = require('mongodb');
+const mongoose = require('mongoose');
+const db = mongoose.connection;
 
 var index = require('./routes/index');
 var users = require('./routes/users');
@@ -12,7 +22,10 @@ var app = express();
 
 // view engine setup
 app.set('views', path.join(__dirname, 'views'));
-app.set('view engine', 'jade');
+app.set('view engine', 'pug');
+
+app.use('/', index);
+app.use('/users', users);
 
 // uncomment after placing your favicon in /public
 //app.use(favicon(path.join(__dirname, 'public', 'favicon.ico')));
@@ -22,8 +35,40 @@ app.use(bodyParser.urlencoded({ extended: false }));
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
 
-app.use('/', index);
-app.use('/users', users);
+// Handle Sessions
+app.use(session({
+  secret: 'secret',
+  saveUninitialized: true,
+  resave: true
+}));
+
+// Passport
+app.use(passport.initialize());
+app.use(passport.session());
+
+// Validator
+app.use(expressValidator({
+  errorFormatter (param, msg, value) {
+    let namespace = param.split('.'),
+      root = namespace.shift(),
+      formParam = root;
+    while (namespace.length) {
+      formParam += '[' + namespace.shift() + ']';
+    }
+    return {
+      param: formParam,
+      msg,
+      value
+    };
+  }
+}));
+
+// Messages
+app.use(require('connect-flash')());
+app.use((req, res, next) => {
+	res.locals.messages = require('express-messages')(req, res);
+	next();
+});
 
 // catch 404 and forward to error handler
 app.use(function(req, res, next) {
