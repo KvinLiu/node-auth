@@ -8,12 +8,12 @@ const session = require('express-session');
 const expressValidator = require('express-validator');
 const passport = require('passport');
 const LocalStrategy = require('passport-local').Strategy;
-const multer = require('multer');
-const upload = multer({dest: './uploads'});
+
 const flash = require('connect-flash');
 const mongodb = require('mongodb');
 const mongoose = require('mongoose');
 const db = mongoose.connection;
+
 
 var index = require('./routes/index');
 var users = require('./routes/users');
